@@ -65,8 +65,7 @@ class Settings(BaseSettings):
         "Junior", "Assistente", "Trainee","Estagiário"
     ]
 
-    resume_path: str = "config/resume.pdf"
-
+    resume_path: str = "src/config/resume.pdf"
     
 #isso evita que a classe Settings seja instanciada múltiplas vezes
 @lru_cache(maxsize=1)
