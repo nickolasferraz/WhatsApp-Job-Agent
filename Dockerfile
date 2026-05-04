@@ -2,18 +2,21 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Instala dependências do sistema para Playwright
-RUN apt-get update && apt-get install -y \
-    curl wget gnupg libnss3 libatk1.0-0 libatk-bridge2.0-0 \
-    libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 \
-    libxfixes3 libxrandr2 libgbm1 libasound2 libpango-1.0-0 \
-    libcairo2 fonts-liberation && \
-    rm -rf /var/lib/apt/lists/*
+# Instala apenas o minimo do sistema necessario para o Playwright
+# --with-deps no playwright install cuida do resto automaticamente
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
+# Instala dependencias Python primeiro (camada cacheada separadamente do codigo)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Instala Chromium com TODAS as suas dependencias de sistema (--with-deps faz o apt-get interno)
 RUN playwright install chromium --with-deps
 
-COPY . .
+# Copia o codigo fonte
+COPY src/ ./src/
 
-CMD ["python", "main.py"]
+# Ponto de entrada: main.py esta em src/
+CMD ["python", "src/main.py"]

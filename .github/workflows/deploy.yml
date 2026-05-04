@@ -62,7 +62,7 @@ jobs:
             WHATSAPP_TARGET=${{ secrets.WHATSAPP_TARGET }}
             WHATSAPP_INSTANCE_NAME=${{ secrets.WHATSAPP_INSTANCE_NAME }}
             IA_VERSION=${{ secrets.IA_VERSION }}
-            REDIS_URL=redis://redis:6379/2
+            REDIS_URL=redis://evolution_redis:6379/2
             MIN_SCORE_TO_NOTIFY=60
             MAX_NOTIFICATIONS_PER_RUN=10
             SCRAPE_WORKERS=4
@@ -72,10 +72,8 @@ jobs:
             docker compose down
             docker compose up -d
 
-            # Aguarda containers subirem completamente
             sleep 10
 
-            # Roda os testes dentro do container com tudo funcionando
             docker compose run --rm job-agent pytest tests/ -v
-            
+
             docker image prune -f
