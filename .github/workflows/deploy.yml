@@ -1,0 +1,81 @@
+name: Deploy Job Agent
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t job-agent:latest .
+
+      - name: Save Docker image
+        run: docker save job-agent:latest | gzip > image.tar.gz
+
+      - name: Copy image to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "image.tar.gz"
+          target: "/tmp/"
+
+      - name: Copy docker-compose to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "docker-compose.yml"
+          target: "${{ secrets.APP_DIR }}"
+          strip_components: 1
+
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            docker load < /tmp/image.tar.gz
+            rm /tmp/image.tar.gz
+
+            mkdir -p ${{ secrets.APP_DIR }}
+            cd ${{ secrets.APP_DIR }}
+
+            cat > .env << EOF
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+            SERPAPI_KEY=${{ secrets.SERPAPI_KEY }}
+            AUTHENTICATION_API_KEY=${{ secrets.AUTHENTICATION_API_KEY }}
+            EVOLUTION_API_URL=${{ secrets.EVOLUTION_API_URL }}
+            EVOLUTION_API_VERSION=${{ secrets.EVOLUTION_API_VERSION }}
+            WHATSAPP_TARGET=${{ secrets.WHATSAPP_TARGET }}
+            WHATSAPP_INSTANCE_NAME=${{ secrets.WHATSAPP_INSTANCE_NAME }}
+            IA_VERSION=${{ secrets.IA_VERSION }}
+            REDIS_URL=redis://redis:6379/2
+            MIN_SCORE_TO_NOTIFY=60
+            MAX_NOTIFICATIONS_PER_RUN=10
+            SCRAPE_WORKERS=4
+            REDIS_TTL_DAYS=30
+            EOF
+
+            docker compose down
+            docker compose up -d
+
+            # Aguarda containers subirem completamente
+            sleep 10
+
+            # Roda os testes dentro do container com tudo funcionando
+            docker compose run --rm job-agent pytest tests/ -v
+            
+            docker image prune -f
