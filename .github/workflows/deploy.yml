@@ -21,7 +21,7 @@ jobs:
       - name: Save Docker image
         run: docker save job-agent:latest | gzip > image.tar.gz
 
-         - name: Copy image to server
+      - name: Copy image to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
