@@ -55,8 +55,9 @@ class Settings(BaseSettings):
 
     # Grupos de keywords (booleanas)
     keyword_roles: list[str] = [
-        "Supply chain", "Logistica",
-        "Analista de logistica", "Assistente de logistica"
+        "Supply chain", "Logistica","Administração"
+        "Analista de logistica", "Assistente de logistica","Asistente Administrativo",
+        "Assistente Administrativo"
     ]
     keyword_locations: list[str] = [
         "São Paulo", "LATAM", "Brazil", "Remote"
