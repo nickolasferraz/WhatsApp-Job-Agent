@@ -21,7 +21,7 @@ jobs:
       - name: Save Docker image
         run: docker save job-agent:latest | gzip > image.tar.gz
 
-      - name: Copy image to server
+         - name: Copy image to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -38,7 +38,6 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           source: "docker-compose.yml"
           target: "${{ secrets.APP_DIR }}"
-          strip_components: 1
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.0.3
@@ -71,9 +70,6 @@ jobs:
 
             docker compose down
             docker compose up -d
-
             sleep 10
-
             docker compose run --rm job-agent pytest tests/ -v
-
             docker image prune -f
