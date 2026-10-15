@@ -9,7 +9,7 @@ on:
 
 jobs:
   # -------------------------------------------------------------------------
-  # 1. TESTES AUTOMATIZADOS (Roda no runner do GitHub com os Repository Secrets)
+  # 1. TESTES AUTOMATIZADOS (Executa no GitHub Actions ANTES do deploy)
   # -------------------------------------------------------------------------
   test:
     name: Run Unit Tests
@@ -42,7 +42,7 @@ jobs:
           IA_VERSION=${{ secrets.IA_VERSION }}
           REDIS_URL=${{ secrets.REDIS_URL }}
           DB_HOST=${{ secrets.DB_HOST }}
-          DB_PORT=${{ secrets.DB_PORT }}
+          DB_PORT=${{ secrets.DB_PORT || '5432' }}
           DB_USER=${{ secrets.DB_USER }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           DB_NAME=${{ secrets.DB_NAME }}
@@ -61,7 +61,7 @@ jobs:
           IA_VERSION: ${{ secrets.IA_VERSION }}
           REDIS_URL: ${{ secrets.REDIS_URL }}
           DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_PORT: ${{ secrets.DB_PORT || '5432' }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_NAME: ${{ secrets.DB_NAME }}
@@ -69,7 +69,7 @@ jobs:
           python tests/test_sectors_and_multi_resume.py
 
   # -------------------------------------------------------------------------
-  # 2. BUILD E DEPLOY NO SERVIDOR VPS (Apenas se os testes passarem)
+  # 2. BUILD E DEPLOY NO SERVIDOR VPS (Autenticação 100% via Chave SSH)
   # -------------------------------------------------------------------------
   deploy:
     name: Build & Deploy to VPS
@@ -91,28 +91,28 @@ jobs:
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: "image.tar.gz"
           target: "/tmp/"
+          timeout: "15m"
 
       - name: Copy docker-compose to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: "docker-compose.yml"
           target: "${{ secrets.APP_DIR }}"
+          timeout: "3m"
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          timeout: "10m"
           script: |
             docker load < /tmp/image.tar.gz
             rm -f /tmp/image.tar.gz
@@ -139,7 +139,7 @@ jobs:
             APP_PORT=${{ secrets.APP_PORT || '8000' }}
             # Credenciais do PostgreSQL
             DB_HOST=${{ secrets.DB_HOST }}
-            DB_PORT=${{ secrets.DB_PORT }}
+            DB_PORT=${{ secrets.DB_PORT || '5432' }}
             DB_USER=${{ secrets.DB_USER }}
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             DB_NAME=${{ secrets.DB_NAME }}
