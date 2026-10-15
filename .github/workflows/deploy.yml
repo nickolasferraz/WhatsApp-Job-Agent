@@ -9,7 +9,7 @@ on:
 
 jobs:
   # -------------------------------------------------------------------------
-  # 1. TESTES AUTOMATIZADOS (Roda no runner do GitHub ANTES do deploy)
+  # 1. TESTES AUTOMATIZADOS (Roda no runner do GitHub com os Repository Secrets)
   # -------------------------------------------------------------------------
   test:
     name: Run Unit Tests
@@ -30,10 +30,41 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Create .env from Repository Secrets
+        run: |
+          cat > .env << 'EOF'
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          SERPAPI_KEY=${{ secrets.SERPAPI_KEY }}
+          AUTHENTICATION_API_KEY=${{ secrets.AUTHENTICATION_API_KEY }}
+          EVOLUTION_API_URL=${{ secrets.EVOLUTION_API_URL }}
+          EVOLUTION_API_VERSION=${{ secrets.EVOLUTION_API_VERSION }}
+          WHATSAPP_INSTANCE_NAME=${{ secrets.WHATSAPP_INSTANCE_NAME }}
+          IA_VERSION=${{ secrets.IA_VERSION }}
+          REDIS_URL=${{ secrets.REDIS_URL }}
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          EOF
+
       - name: Run Tests
         env:
           PYTHONPATH: src
           PYTHONIOENCODING: utf-8
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+          AUTHENTICATION_API_KEY: ${{ secrets.AUTHENTICATION_API_KEY }}
+          EVOLUTION_API_URL: ${{ secrets.EVOLUTION_API_URL }}
+          EVOLUTION_API_VERSION: ${{ secrets.EVOLUTION_API_VERSION }}
+          WHATSAPP_INSTANCE_NAME: ${{ secrets.WHATSAPP_INSTANCE_NAME }}
+          IA_VERSION: ${{ secrets.IA_VERSION }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
         run: |
           python tests/test_sectors_and_multi_resume.py
 
@@ -89,7 +120,7 @@ jobs:
             mkdir -p ${{ secrets.APP_DIR }}
             cd ${{ secrets.APP_DIR }}
 
-            # Gera o .env completo com credenciais de banco e portas configuradas
+            # Gera o .env completo na VPS com credenciais de banco e portas configuradas
             cat > .env << 'EOF'
             GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
             SERPAPI_KEY=${{ secrets.SERPAPI_KEY }}
@@ -105,7 +136,7 @@ jobs:
             SCRAPE_WORKERS=4
             REDIS_TTL_DAYS=30
             # Porta do Job Agent (8000 evita colisão com a 8082 do Evolution e a 8083)
-            APP_PORT=${{ secrets.APP_PORT || '8005' }}
+            APP_PORT=${{ secrets.APP_PORT || '8000' }}
             # Credenciais do PostgreSQL
             DB_HOST=${{ secrets.DB_HOST }}
             DB_PORT=${{ secrets.DB_PORT }}

@@ -20,14 +20,14 @@ class Settings(BaseSettings):
     # O pydantic faz o cast automático das variáveis do arquivo .env para a classe Settings
     # O Field() faz o cast automático das variáveis do arquivo .env para a classe Settings
 
-    gemini_api_key: str = Field(alias="GEMINI_API_KEY")
-    serpapi_key: str = Field(alias="SERPAPI_KEY")
-    authentication_api_key: str = Field(alias="AUTHENTICATION_API_KEY")
-    evolution_api_url: str = Field(alias="EVOLUTION_API_URL")
-    evolution_api_version: str = Field(alias="EVOLUTION_API_VERSION")
+    gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
+    serpapi_key: str = Field(default="", alias="SERPAPI_KEY")
+    authentication_api_key: str = Field(default="", alias="AUTHENTICATION_API_KEY")
+    evolution_api_url: str = Field(default="http://localhost:8082", alias="EVOLUTION_API_URL")
+    evolution_api_version: str = Field(default="v2.2.3", alias="EVOLUTION_API_VERSION")
 
-    whatsapp_instance_name: str = Field(alias="WHATSAPP_INSTANCE_NAME")  # ← era evolution_api_instance no send
-    ia_version: str = Field(alias="IA_VERSION")
+    whatsapp_instance_name: str = Field(default="", alias="WHATSAPP_INSTANCE_NAME")
+    ia_version: str = Field(default="gemini-2.5-flash", alias="IA_VERSION")
     min_score_to_notify: int = Field(default=60, alias="MIN_SCORE_TO_NOTIFY")
     max_results_per_query: int = 10
     # Limite de vagas enviadas por execucao do pipeline
@@ -39,11 +39,11 @@ class Settings(BaseSettings):
     redis_ttl_days: int = Field(default=30, alias="REDIS_TTL_DAYS")
 
     # Database Config
-    DB_HOST: str = Field(alias="DB_HOST")
-    DB_PORT: int = Field(alias="DB_PORT")
-    DB_USER: str = Field(alias="DB_USER")
-    DB_PASSWORD: str = Field(alias="DB_PASSWORD")
-    DB_NAME: str = Field(alias="DB_NAME")    
+    DB_HOST: str = Field(default="localhost", alias="DB_HOST")
+    DB_PORT: int = Field(default=5432, alias="DB_PORT")
+    DB_USER: str = Field(default="postgres", alias="DB_USER")
+    DB_PASSWORD: str = Field(default="postgres", alias="DB_PASSWORD")
+    DB_NAME: str = Field(default="postgres", alias="DB_NAME")    
 
     # Sites usados nas queries de busca (SerpAPI)
     target_sites: list[str] = [
