@@ -8,7 +8,41 @@ on:
       - 'docs/**'
 
 jobs:
+  # -------------------------------------------------------------------------
+  # 1. TESTES AUTOMATIZADOS (Roda no runner do GitHub ANTES do deploy)
+  # -------------------------------------------------------------------------
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Tests
+        env:
+          PYTHONPATH: src
+          PYTHONIOENCODING: utf-8
+        run: |
+          python tests/test_sectors_and_multi_resume.py
+
+  # -------------------------------------------------------------------------
+  # 2. BUILD E DEPLOY NO SERVIDOR VPS (Apenas se os testes passarem)
+  # -------------------------------------------------------------------------
   deploy:
+    name: Build & Deploy to VPS
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
@@ -27,6 +61,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
           source: "image.tar.gz"
           target: "/tmp/"
 
@@ -36,6 +71,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
           source: "docker-compose.yml"
           target: "${{ secrets.APP_DIR }}"
 
@@ -45,31 +81,39 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             docker load < /tmp/image.tar.gz
-            rm /tmp/image.tar.gz
+            rm -f /tmp/image.tar.gz
 
             mkdir -p ${{ secrets.APP_DIR }}
             cd ${{ secrets.APP_DIR }}
 
-            cat > .env << EOF
+            # Gera o .env completo com credenciais de banco e portas configuradas
+            cat > .env << 'EOF'
             GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
             SERPAPI_KEY=${{ secrets.SERPAPI_KEY }}
             AUTHENTICATION_API_KEY=${{ secrets.AUTHENTICATION_API_KEY }}
+            # Evolution API na VPS (porta 8082)
             EVOLUTION_API_URL=${{ secrets.EVOLUTION_API_URL }}
             EVOLUTION_API_VERSION=${{ secrets.EVOLUTION_API_VERSION }}
-            WHATSAPP_TARGET=${{ secrets.WHATSAPP_TARGET }}
             WHATSAPP_INSTANCE_NAME=${{ secrets.WHATSAPP_INSTANCE_NAME }}
             IA_VERSION=${{ secrets.IA_VERSION }}
-            REDIS_URL=redis://evolution_redis:6379/2
+            REDIS_URL=${{ secrets.REDIS_URL || 'redis://evolution_redis:6379/2' }}
             MIN_SCORE_TO_NOTIFY=60
             MAX_NOTIFICATIONS_PER_RUN=10
             SCRAPE_WORKERS=4
             REDIS_TTL_DAYS=30
+            # Porta do Job Agent (8000 evita colisão com a 8082 do Evolution e a 8083)
+            APP_PORT=${{ secrets.APP_PORT || '8005' }}
+            # Credenciais do PostgreSQL
+            DB_HOST=${{ secrets.DB_HOST }}
+            DB_PORT=${{ secrets.DB_PORT }}
+            DB_USER=${{ secrets.DB_USER }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_NAME=${{ secrets.DB_NAME }}
             EOF
 
             docker compose down
             docker compose up -d
-            sleep 10
-            docker compose run --rm job-agent pytest tests/ -v
             docker image prune -f

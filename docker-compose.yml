@@ -1,10 +1,13 @@
-version: '3.9'
+version: '3.8'
 
 services:
   job-agent:
     container_name: job-agent
     image: job-agent:latest
-    restart: always
+    restart: unless-stopped
+    ports:
+      # Expõe na porta 8000 do host por padrão (evita colidir com a 8082 do Evolution e a 8083)
+      - "${APP_PORT:-8000}:8000"
     env_file:
       - .env
     networks:

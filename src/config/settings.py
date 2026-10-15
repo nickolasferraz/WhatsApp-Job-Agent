@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     authentication_api_key: str = Field(alias="AUTHENTICATION_API_KEY")
     evolution_api_url: str = Field(alias="EVOLUTION_API_URL")
     evolution_api_version: str = Field(alias="EVOLUTION_API_VERSION")
-    whatsapp_target: str = Field(alias="WHATSAPP_TARGET")         # ← era whatsapp_group_jid no send
+
     whatsapp_instance_name: str = Field(alias="WHATSAPP_INSTANCE_NAME")  # ← era evolution_api_instance no send
     ia_version: str = Field(alias="IA_VERSION")
     min_score_to_notify: int = Field(default=60, alias="MIN_SCORE_TO_NOTIFY")
@@ -38,11 +38,43 @@ class Settings(BaseSettings):
     redis_url: str = Field(default="redis://localhost:6379/2", alias="REDIS_URL")
     redis_ttl_days: int = Field(default=30, alias="REDIS_TTL_DAYS")
 
+    # Database Config
+    DB_HOST: str = Field(alias="DB_HOST")
+    DB_PORT: int = Field(alias="DB_PORT")
+    DB_USER: str = Field(alias="DB_USER")
+    DB_PASSWORD: str = Field(alias="DB_PASSWORD")
+    DB_NAME: str = Field(alias="DB_NAME")    
+
     # Sites usados nas queries de busca (SerpAPI)
     target_sites: list[str] = [
         "linkedin.com/jobs",
         "gupy.io",
         "catho.com.br",
+        # Adicionado: Job Boards
+        "lever.co",
+        "indeed.com",
+        "glassdoor.com",
+        "wellfound.com",
+        "remoteok.com",
+        "weworkremotely.com",
+        # Adicionado: Outsourcings
+        "x-team.com",
+        "cake.com",
+        "bairesdev.com",
+        "toptal.com",
+        "revelo.com.br",
+        # Adicionado: Big Techs (careers diretos)
+        "careers.google.com",
+        "metacareers.com",
+        "jobs.apple.com",
+        "amazon.jobs",
+        "careers.microsoft.com",
+        "jobs.netflix.com",
+        "lifeatspotify.com",
+        "uber.com/careers",
+        # Adicionado: Comunidades e repositórios
+        "news.ycombinator.com",       # Hacker News Who Is Hiring
+        "github.com/remoteintech",    # Remote In Tech repo
     ]
 
     # Sites que usam scraping estatico (httpx) em vez de Playwright
@@ -51,22 +83,45 @@ class Settings(BaseSettings):
         "catho.com.br",
         "infojobs.com.br",
         "vagas.com.br",
+        # Adicionado
+        "remoteok.com",
+        "weworkremotely.com",
+        "news.ycombinator.com",
+        "wellfound.com",
+        "revelo.com.br",
+        "glassdoor.com",
     ]
 
-    # Grupos de keywords (booleanas)
-    keyword_roles: list[str] = [
-        "Supply chain", "Logistica","Administração",
-        "Analista de logistica", "Assistente de logistica","Asistente Administrativo",
-        "Assistente Administrativo"
-    ]
-    keyword_locations: list[str] = [
-        "São Paulo", "LATAM", "Brazil", "Remote"
-    ]
-    keyword_levels: list[str] = [
-        "Junior", "Assistente", "Trainee","Estagiário"
+    # Adicionado
+    boolean_search_queries: list[str] = [
+        # Lever — vagas escondidas não indexadas no LinkedIn
+        'site:lever.co ({stack} OR {framework}) AND (Remote OR Latam OR "Latin America" OR Brazil)',
+
+        # LinkedIn Jobs
+        'site:linkedin.com/jobs ({stack} OR {framework}) AND (Remote) AND (Brazil OR Latam)',
+
+        # LinkedIn Posts de recrutadores (não aba Jobs)
+        'site:linkedin.com (hiring OR "we are hiring" OR "open position") AND ({stack}) AND (Remote OR Latam)',
+
+        # Boards diversos + GitHub Jobs
+        '({stack} OR {framework}) AND (Remote OR "Latin America") AND ("software engineer" OR developer)',
+
+        # Hacker News Who Is Hiring (mês atual)
+        'site:news.ycombinator.com "Who is hiring" "2026" {stack}',
+
+        # Remote In Tech (GitHub repo)
+        'site:github.com/remoteintech {stack} developer remote',
+
+        # Recrutadores no LinkedIn direto
+        '"Tech Recruiter" AND ({stack} OR "software engineer") AND (Brazil OR Latam OR Germany OR Netherlands)',
     ]
 
-    resume_path: str = "src/config/resume.pdf"
+    # Adicionado
+    github_remote_in_tech_api: str = "https://api.github.com/repos/remoteintech/remote-jobs/contents/company-profiles"
+    github_remote_in_tech_readme: str = "https://github.com/remoteintech/remote-jobs/blob/main/README.md"
+
+    # Configurações globais antigas removidas. 
+    # Agora as keywords e o currículo são obtidos dinamicamente de cada usuário no Banco de Dados!
     
 #isso evita que a classe Settings seja instanciada múltiplas vezes
 @lru_cache(maxsize=1)

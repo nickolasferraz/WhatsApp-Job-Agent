@@ -2,7 +2,7 @@
 import httpx
 from config.settings import settings
 
-def _format_message(result: dict) -> str:
+def _format_message(result: dict, profile_label: str = "") -> str:
     job   = result["job"]
     score = result["score"]
     label = result["probability_label"]
@@ -20,7 +20,10 @@ def _format_message(result: dict) -> str:
     if parts:
         contact_line = "\n" + " | ".join(parts)
 
+    profile_header = f"👤 Perfil: *{profile_label}*\n" if profile_label else ""
+
     return (
+        f"{profile_header}"
         f"{emoji} *{job.get('title')}* — {job.get('company')}\n"
         f"📍 {job.get('location') or 'N/A'} | 🏠 {job.get('work_mode') or 'N/A'}\n"
         f"🎯 Score: *{score}/100* ({label} chance)\n\n"
@@ -31,27 +34,35 @@ def _format_message(result: dict) -> str:
         f"🔗 {job.get('url')}"
     )
 
-def send_to_group(result: dict) -> bool:
+def send_to_target(result: dict, target: str, profile_label: str = "") -> bool:
     import logging
+    import re
     log = logging.getLogger(__name__)
 
-    message = _format_message(result)
+    message = _format_message(result, profile_label=profile_label)
+
+    # Limpa formatação (+, espaços, hífens) e aplica o padrão do Evolution
+    clean_number = re.sub(r"\D", "", target)
+    if target.endswith("@g.us"):
+        clean_number = f"{clean_number}@g.us"
+    else:
+        clean_number = f"{clean_number}@s.whatsapp.net"
+
     url = f"{settings.evolution_api_url}/message/sendText/{settings.whatsapp_instance_name}"
-    log.info(f"  🔗 POST {url}")
+    log.info(f"  🔗 POST {url} (Destino: {clean_number})")
     try:
         resp = httpx.post(
             url,
             headers={"apikey": settings.authentication_api_key},
             json={
-                "number":  settings.whatsapp_target,
+                "number": clean_number,
                 "text":   message,
                 "options": {"delay": 1200, "presence": "composing"},
             },
             timeout=10,
         )
         log.info(f"  📡 Status: {resp.status_code}")
-        log.info(f"  📄 Response: {resp.text[:300]}")
-        # Evolution API retorna 201 Created no envio bem-sucedido
+        # Evolution API retorna 200 OK ou 201 Created no envio bem-sucedido
         return resp.status_code in (200, 201)
     except Exception as e:
         log.error(f"  ❌ Erro ao enviar WhatsApp: {type(e).__name__}: {e}")

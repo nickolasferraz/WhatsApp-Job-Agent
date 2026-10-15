@@ -222,13 +222,21 @@ class SeenJobStore:
 
     # ── Camada 2: Semantica (title + company) ─────────────────────────────────
 
-    def is_new_job(self, title: str, company: str) -> bool:
-        """True se esta combinacao titulo+empresa ainda nao foi notificada."""
-        return not self._backend.exists(_PREFIX_SEM + _job_fingerprint(title, company))
+    def is_new_job(self, title: str, company: str, scope: str = "") -> bool:
+        """
+        True se esta combinacao titulo+empresa ainda nao foi notificada.
+        Se 'scope' (ex: user_id ou resume_id) for informado, a checagem fica restrita àquele perfil.
+        """
+        prefix = f"{_PREFIX_SEM}{scope}:" if scope else _PREFIX_SEM
+        return not self._backend.exists(prefix + _job_fingerprint(title, company))
 
-    def mark_job(self, title: str, company: str) -> None:
-        """Registra o par (titulo, empresa) como notificado (com TTL no Redis)."""
-        self._backend.set(_PREFIX_SEM + _job_fingerprint(title, company))
+    def mark_job(self, title: str, company: str, scope: str = "") -> None:
+        """
+        Registra o par (titulo, empresa) como notificado (com TTL no Redis).
+        Se 'scope' for informado, registra especificamente para aquele perfil.
+        """
+        prefix = f"{_PREFIX_SEM}{scope}:" if scope else _PREFIX_SEM
+        self._backend.set(prefix + _job_fingerprint(title, company))
 
     # ── Camada 3: Rastreamento de queries ────────────────────────────────────
 

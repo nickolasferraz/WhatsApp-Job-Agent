@@ -28,6 +28,31 @@ _CATHO_DIRECT = re.compile(r"/vagas/.+/\d+/?$", re.IGNORECASE)
 # InfoJobs e Vagas.com: qualquer URL com segmento numérico de ID no path
 _GENERIC_DIRECT = re.compile(r"/\d{5,}/", re.IGNORECASE)
 
+# Adicionado
+# Lever: jobs.lever.co/empresa/uuid-da-vaga
+_LEVER_DIRECT = re.compile(r"/jobs/[a-f0-9\-]{8,}", re.IGNORECASE)
+
+# Indeed: indeed.com/viewjob?jk=abc123
+_INDEED_DIRECT = re.compile(r"(viewjob|/rc/clk)\?.*jk=", re.IGNORECASE)
+
+# Wellfound: wellfound.com/jobs/123456
+_WELLFOUND_DIRECT = re.compile(r"/jobs/\d+", re.IGNORECASE)
+
+# Remote OK: remoteok.com/remote-jobs/java-developer-empresa-123
+_REMOTEOK_DIRECT = re.compile(r"/remote-jobs/[a-z0-9\-]+-\d+", re.IGNORECASE)
+
+# We Work Remotely: weworkremotely.com/remote-jobs/12345-titulo
+_WWR_DIRECT = re.compile(r"/remote-jobs/\d+-", re.IGNORECASE)
+
+# Big Techs: padrão genérico por path com ID ou slug
+_BIGTECH_DIRECT = re.compile(r"/(jobs|positions|careers|openings)/[\w\-]+/?\d*/?$", re.IGNORECASE)
+
+# Glassdoor: glassdoor.com/job-listing/titulo-JVID12345.htm
+_GLASSDOOR_DIRECT = re.compile(r"/job-listing/.*JVID\d+", re.IGNORECASE)
+
+# Hacker News: item individual
+_HN_DIRECT = re.compile(r"/item\?id=\d+", re.IGNORECASE)
+
 
 def is_direct_job_url(url: str) -> bool:
     """
@@ -61,6 +86,24 @@ def is_direct_job_url(url: str) -> bool:
     if "catho.com.br" in url_lower:
         return bool(_CATHO_DIRECT.search(url))
 
+    # Adicionado
+    if "lever.co" in url_lower:
+        return bool(_LEVER_DIRECT.search(url))
+    if "indeed.com" in url_lower:
+        return bool(_INDEED_DIRECT.search(url))
+    if "wellfound.com" in url_lower:
+        return bool(_WELLFOUND_DIRECT.search(url))
+    if "remoteok.com" in url_lower:
+        return bool(_REMOTEOK_DIRECT.search(url))
+    if "weworkremotely.com" in url_lower:
+        return bool(_WWR_DIRECT.search(url))
+    if any(bt in url_lower for bt in ["careers.google.com", "metacareers.com", "jobs.apple.com", "amazon.jobs", "careers.microsoft.com", "jobs.netflix.com", "lifeatspotify.com", "uber.com/careers"]):
+        return bool(_BIGTECH_DIRECT.search(url))
+    if "glassdoor.com" in url_lower:
+        return bool(_GLASSDOOR_DIRECT.search(url))
+    if "news.ycombinator.com" in url_lower:
+        return bool(_HN_DIRECT.search(url))
+
     # InfoJobs / Vagas.com / outros: aceita se houver ID numérico no path
     if "infojobs.com.br" in url_lower or "vagas.com.br" in url_lower:
         return bool(_GENERIC_DIRECT.search(url))
@@ -80,6 +123,7 @@ def search_links(query: str) -> list[str]:
         "api_key": settings.serpapi_key,
         "hl":      "pt-br",
         "gl":      "br",
+        "tbs":     "qdr:w", # Limita aos resultados dos ultimos 7 dias (qdr:d para 24h)
     })
 
     results   = search.get_dict()
@@ -92,3 +136,14 @@ def search_links(query: str) -> list[str]:
         log.info(f"  [gateway] {skipped} URL(s) de listagem descartadas, {len(direct)} diretas mantidas")
 
     return direct
+
+# Adicionado
+def build_boolean_queries(stack: str, framework: str) -> list[str]:
+    """
+    Substitui os placeholders {stack} e {framework} nos templates de
+    settings.boolean_search_queries e retorna a lista pronta para SerpAPI.
+    """
+    queries = []
+    for q in settings.boolean_search_queries:
+        queries.append(q.format(stack=stack, framework=framework))
+    return queries

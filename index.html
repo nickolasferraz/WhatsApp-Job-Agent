@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - WhatsApp Job Agent</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg-dark: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #06b6d4;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #020617 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2.5rem 1rem;
+        }
+
+        .container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 680px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .helper-text {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 0.35rem;
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-weight: 700;
+            font-size: 2rem;
+            margin-bottom: 0.4rem;
+            text-align: center;
+            background: linear-gradient(to right, #818cf8, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .info-badge {
+            background: rgba(79, 70, 229, 0.15);
+            border: 1px solid rgba(79, 70, 229, 0.4);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+            color: #c7d2fe;
+            margin-bottom: 1.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin: 1.5rem 0 1rem 0;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .form-row { grid-template-columns: 1fr; }
+            .container { padding: 1.5rem; }
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.45rem;
+            font-size: 0.88rem;
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+        }
+
+        /* Sector Pills */
+        .sectors-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sector-pill {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #334155;
+            border-radius: 20px;
+            padding: 0.35rem 0.8rem;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .sector-pill:hover {
+            border-color: var(--primary);
+            color: #fff;
+        }
+
+        .sector-pill.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .file-upload {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.75rem;
+            border: 2px dashed #475569;
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.5);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .file-upload:hover {
+            border-color: var(--primary);
+            background: rgba(79, 70, 229, 0.05);
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-name {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: #10b981;
+            display: none;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.95rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background: #475569;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.75rem;
+            border-radius: 8px;
+            background: #10b981;
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 100;
+            font-size: 0.95rem;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.error {
+            background: #ef4444;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>WhatsApp Job Agent</h1>
+        <p class="subtitle">Receba vagas personalizadas diretamente no seu WhatsApp</p>
+
+        <div class="info-badge">
+            💡 <span><strong>Dica:</strong> Você pode cadastrar múltiplos currículos com o mesmo e-mail (ex: um focado na <em>Indústria Automotiva</em> e outro em <em>Logística</em>)!</span>
+        </div>
+
+        <form id="uploadForm">
+            <!-- Dados do Usuário -->
+            <div class="section-title">👤 Seus Dados de Contato</div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="name">Nome Completo</label>
+                    <input type="text" id="name" name="name" required placeholder="Ex: João da Silva">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" name="email" required placeholder="Ex: joao@email.com">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">WhatsApp (com DDD)</label>
+                <input type="tel" id="phone" name="phone" required placeholder="Ex: 5511999999999">
+                <span class="helper-text">Número onde você receberá as notificações de vagas aprovadas.</span>
+            </div>
+
+            <!-- Dados do Perfil de Busca -->
+            <div class="section-title">🎯 Perfil e Segmento Desejado</div>
+
+            <div class="form-group">
+                <label for="label">Rótulo deste Currículo / Perfil</label>
+                <input type="text" id="label" name="label" required placeholder="Ex: Engenheiro Automotivo, Analista de Logística, etc.">
+                <span class="helper-text">Ajuda a identificar para qual perfil a vaga foi encontrada.</span>
+            </div>
+
+            <div class="form-group">
+                <label>Setores / Segmentos Industriais</label>
+                <span class="helper-text">Clique nos setores desejados ou digite abaixo separados por vírgula:</span>
+                <div class="sectors-grid" id="sectorsContainer">
+                    <!-- Pills carregadas via API ou padrão -->
+                </div>
+                <input type="text" id="target_sectors" name="target_sectors" placeholder="Ex: automotivo, logistica, industria">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="target_companies">Empresas-Alvo (Opcional)</label>
+                    <input type="text" id="target_companies" name="target_companies" placeholder="Ex: Volkswagen, Bosch, Stellantis">
+                    <span class="helper-text">Separe por vírgula para focar nestas empresas.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="excluded_companies">Empresas a Excluir (Opcional)</label>
+                    <input type="text" id="excluded_companies" name="excluded_companies" placeholder="Ex: Empresa X, Consultoria Y">
+                    <span class="helper-text">Vagas dessas empresas serão descartadas.</span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="keyword_roles">Cargos Desejados</label>
+                    <input type="text" id="keyword_roles" name="keyword_roles" required placeholder="Ex: Engenheiro de Processos, Supervisor">
+                    <span class="helper-text">Separe por vírgula.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="keyword_levels">Senioridade</label>
+                    <input type="text" id="keyword_levels" name="keyword_levels" placeholder="Ex: Pleno, Sênior, Especialista">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="keyword_locations">Localizações / Modalidades</label>
+                <input type="text" id="keyword_locations" name="keyword_locations" placeholder="Ex: São Paulo, ABC Paulista, Híbrido, Remoto">
+            </div>
+
+            <div class="form-group">
+                <label>Arquivo do Currículo (PDF)</label>
+                <div class="file-upload" id="dropZone">
+                    <div>
+                        <span id="fileText">📄 Arraste seu PDF ou clique aqui</span>
+                        <input type="file" id="file" name="file" accept=".pdf" required>
+                    </div>
+                </div>
+                <div class="file-name" id="fileName"></div>
+            </div>
+
+            <button type="submit" id="submitBtn">Cadastrar Perfil de Vagas</button>
+        </form>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const fileInput = document.getElementById('file');
+        const fileNameDisplay = document.getElementById('fileName');
+        const fileText = document.getElementById('fileText');
+        const form = document.getElementById('uploadForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const toast = document.getElementById('toast');
+        const sectorsInput = document.getElementById('target_sectors');
+        const sectorsContainer = document.getElementById('sectorsContainer');
+
+        const defaultSectors = [
+            { key: "automotivo", label: "Automotivo" },
+            { key: "logistica", label: "Logística / Supply Chain" },
+            { key: "industria", label: "Indústria / Manufatura" },
+            { key: "tecnologia", label: "Tecnologia / TI" },
+            { key: "varejo", label: "Varejo & E-commerce" },
+            { key: "financeiro", label: "Financeiro / Bancos" },
+            { key: "energia", label: "Energia, Óleo & Gás" },
+            { key: "agronegocio", label: "Agronegócio" },
+            { key: "alimentos", label: "Alimentos & Bebidas" },
+            { key: "saude", label: "Saúde" },
+        ];
+
+        let selectedSectors = new Set();
+
+        function renderSectorPills(sectors) {
+            sectorsContainer.innerHTML = '';
+            sectors.forEach(s => {
+                const pill = document.createElement('div');
+                pill.className = 'sector-pill';
+                pill.textContent = s.label;
+                pill.dataset.key = s.key;
+
+                pill.addEventListener('click', () => {
+                    if (selectedSectors.has(s.key)) {
+                        selectedSectors.delete(s.key);
+                        pill.classList.remove('active');
+                    } else {
+                        selectedSectors.add(s.key);
+                        pill.classList.add('active');
+                    }
+                    sectorsInput.value = Array.from(selectedSectors).join(', ');
+                });
+
+                sectorsContainer.appendChild(pill);
+            });
+        }
+
+        // Carrega setores da API se disponível, senão usa padrão
+        fetch('/sectors')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data) && data.length > 0) {
+                    renderSectorPills(data);
+                } else {
+                    renderSectorPills(defaultSectors);
+                }
+            })
+            .catch(() => renderSectorPills(defaultSectors));
+
+        sectorsInput.addEventListener('input', () => {
+            const typed = sectorsInput.value.split(',').map(s => s.trim().toLowerCase());
+            selectedSectors = new Set(typed.filter(s => s));
+            document.querySelectorAll('.sector-pill').forEach(pill => {
+                if (selectedSectors.has(pill.dataset.key)) {
+                    pill.classList.add('active');
+                } else {
+                    pill.classList.remove('active');
+                }
+            });
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const name = e.target.files[0].name;
+                fileText.style.display = 'none';
+                fileNameDisplay.textContent = '📄 ' + name;
+                fileNameDisplay.style.display = 'block';
+            }
+        });
+
+        function showToast(message, isError = false) {
+            toast.textContent = message;
+            toast.className = `toast show ${isError ? 'error' : ''}`;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 5000);
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Enviando e processando...';
+
+            const formData = new FormData();
+            formData.append('name', document.getElementById('name').value);
+            formData.append('email', document.getElementById('email').value);
+            formData.append('phone', document.getElementById('phone').value);
+            formData.append('label', document.getElementById('label').value);
+            formData.append('target_sectors', document.getElementById('target_sectors').value);
+            formData.append('target_companies', document.getElementById('target_companies').value);
+            formData.append('excluded_companies', document.getElementById('excluded_companies').value);
+            formData.append('keyword_roles', document.getElementById('keyword_roles').value);
+            formData.append('keyword_locations', document.getElementById('keyword_locations').value);
+            formData.append('keyword_levels', document.getElementById('keyword_levels').value);
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/users/upload/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast('🎉 ' + (data.message || 'Currículo cadastrado com sucesso!'));
+                    form.reset();
+                    selectedSectors.clear();
+                    document.querySelectorAll('.sector-pill').forEach(p => p.classList.remove('active'));
+                    fileText.style.display = 'block';
+                    fileNameDisplay.style.display = 'none';
+                } else {
+                    showToast('❌ Erro: ' + (data.detail || 'Falha ao cadastrar'), true);
+                }
+            } catch (error) {
+                showToast('❌ Erro de conexão com o servidor', true);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Cadastrar Perfil de Vagas';
+            }
+        });
+    </script>
+</body>
+</html>

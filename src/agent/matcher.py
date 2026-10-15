@@ -1,9 +1,12 @@
 # agent/matcher.py
 import json
+import logging
 from rapidfuzz import fuzz
 from google import genai
 from google.genai import types
 from config.settings import settings
+
+log = logging.getLogger(__name__)
 
 client = genai.Client(api_key=settings.gemini_api_key)
 
@@ -55,7 +58,6 @@ def _language_score(job: dict, resume: dict) -> float:
     return covered / len(job_langs)
 
 def _title_score(job: dict, resume: dict) -> float:
-    # Usa 'or ""' para tratar explicitamente valores null vindos do LLM
     title = (job.get("title") or "").lower()
     roles = resume.get("target_roles", []) or []
     if not roles:
@@ -73,57 +75,75 @@ def _objective_score(job: dict, resume: dict) -> int:
     return int(sum(scores[k] * WEIGHTS[k] for k in scores) * 100)
 
 LLM_PROMPT = """
-Analise a compatibilidade do candidato com a vaga e responda SOMENTE JSON:
+Analise a compatibilidade do candidato com a vaga de emprego e responda SOMENTE um JSON:
 {{
-  "llm_score": <0-100>,
+  "llm_score": <inteiro de 0 a 100>,
   "strengths": ["ponto forte 1", "ponto forte 2", "ponto forte 3"],
   "gaps": ["lacuna 1", "lacuna 2"],
-  "summary": "resumo de 2 frases sobre a chance de entrevista"
+  "summary": "resumo de 2 frases sobre a aderência e chance de entrevista"
 }}
 
-Candidato: {resume_summary}
+Candidato:
+{resume_summary}
 
-Vaga: {job_json}
+Vaga:
+{job_json}
 """
 
-def _llm_score(job: dict, resume: dict) -> dict:
-    prompt = LLM_PROMPT.format(
-        resume_summary=(
+def _llm_score(job: dict, resume: dict, fallback_score: int) -> dict:
+    try:
+        resume_summary = (
             f"Nome: {resume.get('name')} | "
             f"Senioridade: {resume.get('seniority')} | "
+            f"Cargos: {', '.join(resume.get('target_roles', []))} | "
             f"Skills: {', '.join(resume.get('skills', [])[:15])} | "
             f"Idiomas: {', '.join(resume.get('languages', []))}"
-        ),
-        job_json=json.dumps({
+        )
+        job_json = json.dumps({
             "title":        job.get("title"),
             "company":      job.get("company"),
             "seniority":    job.get("seniority"),
+            "industries":   job.get("industries", []),
             "requirements": job.get("requirements", []),
             "languages":    job.get("languages", []),
             "description":  job.get("description"),
         }, ensure_ascii=False)
-    )
 
-    response = client.models.generate_content(
-        model=settings.ia_version,
-        contents=prompt,
-        config=types.GenerateContentConfig(temperature=0.1),
-    )
+        prompt = LLM_PROMPT.format(
+            resume_summary=resume_summary,
+            job_json=job_json,
+        )
 
-    raw = response.text.strip()
-    if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
+        model_name = getattr(settings, "ia_version", None) or "gemini-2.5-flash"
+        response = client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=types.GenerateContentConfig(temperature=0.1),
+        )
 
-    return json.loads(raw)
+        raw = response.text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+
+        return json.loads(raw)
+    except Exception as e:
+        log.warning(f"  [matcher] Erro no score LLM: {e}. Usando fallback objetivo.")
+        return {
+            "llm_score": fallback_score,
+            "strengths": ["Perfil compatível com os requisitos essenciais"],
+            "gaps": [],
+            "summary": "Compatibilidade calculada com base nos requisitos objetivos da vaga.",
+        }
 
 def match(job: dict, resume: dict) -> dict:
     obj_score = _objective_score(job, resume)
-    llm_data  = _llm_score(job, resume)
+    llm_data  = _llm_score(job, resume, fallback_score=obj_score)
 
     # Score final: 70% objetivo + 30% LLM
-    final_score = int(obj_score * 0.7 + llm_data["llm_score"] * 0.3)
+    llm_pts = llm_data.get("llm_score", obj_score)
+    final_score = int(obj_score * 0.7 + llm_pts * 0.3)
     label = "Alta" if final_score >= 75 else "Média" if final_score >= 50 else "Baixa"
 
     return {
